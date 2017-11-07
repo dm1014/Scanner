@@ -1,0 +1,2 @@
+# Scanner
+Barcode/QR scanner

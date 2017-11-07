@@ -1,5 +1,5 @@
 //
-//  Scanner.swift
+//  CodeScanner.swift
 //  Scanner
 //
 //  Created by David Martin on 11/7/17.
@@ -10,13 +10,13 @@ import UIKit
 import AVFoundation
 
 @objc public protocol ScannerDelegate: class {
-	func scanner(_ scanner: Scanner, didScanCode code: String, codeType: Scanner.CodeType)
-	func scanner(_ scanner: Scanner, handleError error: NSError)
-	@objc optional func scanner(_ scanner: Scanner, willDismissScanner: Bool)
-	@objc optional func scanner(_ scanner: Scanner, didDismissScanner: Bool)
+	func scanner(_ scanner: CodeScanner, didScanCode code: String, codeType: CodeScanner.CodeType)
+	func scanner(_ scanner: CodeScanner, handleError error: NSError)
+	@objc optional func scanner(_ scanner: CodeScanner, willDismissScanner: Bool)
+	@objc optional func scanner(_ scanner: CodeScanner, didDismissScanner: Bool)
 }
 
-@objc public class Scanner: UIViewController {
+@objc public class CodeScanner: UIViewController {
 	fileprivate enum Constants {
 		enum Codes {
 			static let allCodes: [AVMetadataObject.ObjectType] = [
@@ -282,7 +282,7 @@ import AVFoundation
 	}
 }
 
-extension Scanner: AVCaptureMetadataOutputObjectsDelegate {
+extension CodeScanner: AVCaptureMetadataOutputObjectsDelegate {
 	public func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
 		if let object = metadataObjects.first {
 			let codeType: CodeType

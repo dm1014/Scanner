@@ -277,6 +277,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = YBUVL7AX3C;
 				INFOPLIST_FILE = Scanner/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.dm.addons.Scanner;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -292,6 +293,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = YBUVL7AX3C;
 				INFOPLIST_FILE = Scanner/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.dm.addons.Scanner;
 				PRODUCT_NAME = "$(TARGET_NAME)";

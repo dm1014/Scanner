@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 
 public enum ErrorType {
-	public static let errorType = "\(Bundle.main.bundleIdentifier).errorType"
+	public static let errorType = "\(Bundle.main.bundleIdentifier!).errorType"
 	
 	case noCamera
 	case noInputDevice

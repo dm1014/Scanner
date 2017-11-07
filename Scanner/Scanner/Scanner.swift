@@ -9,7 +9,14 @@
 import UIKit
 import AVFoundation
 
-public class Scanner: UIViewController {
+@objc public protocol ScannerDelegate: class {
+	func scanner(_ scanner: Scanner, didScanCode code: String, codeType: Scanner.CodeType)
+	func scanner(_ scanner: Scanner, handleError error: NSError)
+	@objc optional func scanner(_ scanner: Scanner, willDismissScanner: Bool)
+	@objc optional func scanner(_ scanner: Scanner, didDismissScanner: Bool)
+}
+
+@objc public class Scanner: UIViewController {
 	fileprivate enum Constants {
 		enum Codes {
 			static let allCodes: [AVMetadataObject.ObjectType] = [
@@ -111,27 +118,38 @@ public class Scanner: UIViewController {
 	override public var prefersStatusBarHidden: Bool { return true }
 	override public var supportedInterfaceOrientations: UIInterfaceOrientationMask { return .portrait }
 	
-	public enum ScannerType {
+	@objc public enum CodeType: Int {
+		case barcode
 		case qr
+	}
+	
+	public enum ScannerType {
 		case barcode
 		case both
+		case qr
 	}
 	
 	fileprivate let scannerType: ScannerType
+	
+	public weak var delegate: ScannerDelegate?
 	
 	public init(scannerType: ScannerType) {
 		self.scannerType = scannerType
 		
 		super.init(nibName: nil, bundle: nil)
-		
-		setupViews()
 	}
-	
+
 	required public init?(coder aDecoder: NSCoder) {
 		fatalError("init(coder:) has not been implemented")
 	}
+
+	public override func viewDidLoad() {
+		super.viewDidLoad()
 	
-	override public func viewWillAppear(_ animated: Bool) {
+		setupViews()
+	}
+	
+	public override func viewWillAppear(_ animated: Bool) {
 		super.viewWillAppear(animated)
 		
 		if let session = captureSession, !session.isRunning {
@@ -139,7 +157,7 @@ public class Scanner: UIViewController {
 		}
 	}
 	
-	override public func viewWillDisappear(_ animated: Bool) {
+	public override func viewWillDisappear(_ animated: Bool) {
 		super.viewWillDisappear(animated)
 		
 		if let session = captureSession, session.isRunning {
@@ -160,7 +178,6 @@ public class Scanner: UIViewController {
 			if session.canAddInput(input) {
 				session.addInput(input)
 			} else {
-				// unable to add input
 				handleError(errorType: .unableToAddInput)
 				return
 			}
@@ -180,7 +197,6 @@ public class Scanner: UIViewController {
 					metaOutput.metadataObjectTypes = [.qr]
 				}
 			} else {
-				// unable to add output
 				handleError(errorType: .unableToAddOutput)
 				return
 			}
@@ -223,16 +239,14 @@ public class Scanner: UIViewController {
 	
 	fileprivate func handleError(errorType: ErrorType) {
 		let error = NSError.scanner_error(errorType)
-		let alert = UIAlertController(title: "Error", message: error.localizedDescription, preferredStyle: .alert)
-		alert.addAction(UIAlertAction(title: "Okay", style: .default, handler: nil))
-		present(alert, animated: true, completion: nil)
+		delegate?.scanner(self, handleError: error)
 		captureSession = nil
 	}
 	
-	fileprivate func foundCode(_ code: String) {
-		print("found code:", code)
+	fileprivate func foundCode(_ code: String, codeType: CodeType) {
 		guard !isShowingPopup else { return }
 		recentCode = code
+		delegate?.scanner(self, didScanCode: code, codeType: codeType)
 		
 		view.layoutIfNeeded()
 		UIView.animate(withDuration: Constants.Durations.popup, animations: {
@@ -259,27 +273,37 @@ public class Scanner: UIViewController {
 	
 	@objc fileprivate func tapAction(_ sender: UITapGestureRecognizer) {
 		guard isShowingPopup else { return }
-		dismiss(animated: true, completion: nil)
+		delegate?.scanner?(self, willDismissScanner: true)
+		
+		dismiss(animated: true, completion: { [weak self] in
+			guard let weakSelf = self else { return }
+			weakSelf.delegate?.scanner?(weakSelf, didDismissScanner: true)
+		})
 	}
 }
 
 extension Scanner: AVCaptureMetadataOutputObjectsDelegate {
 	public func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
 		if let object = metadataObjects.first {
+			let codeType: CodeType
 			switch scannerType {
 			case .barcode:
 				guard Constants.Codes.barcodes.contains(object.type) else { return }
+				codeType = .barcode
 			case .both:
 				guard Constants.Codes.allCodes.contains(object.type) else { return }
+				codeType = object.type == .qr ? .qr : .barcode
 			case .qr:
 				guard object.type == .qr else { return }
+				codeType = .qr
 			}
 			
 			guard let readableObject = object as? AVMetadataMachineReadableCodeObject, let value = readableObject.stringValue, let transformedObject = previewLayer?.transformedMetadataObject(for: readableObject) else { return }
 			codeView?.isHidden = false
 			codeView?.frame = transformedObject.bounds
 
-			foundCode(value)
+			
+			foundCode(value, codeType: codeType)
 		} else {
 			codeView?.isHidden = true
 			hidePopup()

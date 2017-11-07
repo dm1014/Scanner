@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'Scanner'
-  s.version          = '0.1.1'
+  s.version          = '0.1.2'
   s.summary          = 'Barcode/QR '
 
   s.description      = <<-DESC
@@ -13,7 +13,7 @@ Barcode/QR scanner
   s.source           = { :git => 'https://github.com/dm1014/Scanner.git', :tag => s.version.to_s }
 
   s.ios.deployment_target = '10.0'
-  s.source_files = 'Scanner/Scanner/Scanner.swift', 'Scanner/Scanner/String+Codes.swift', 'Scanner/Scanner/Error+Additions.swift'
+  s.source_files = 'Scanner/Scanner/CodeScanner.swift', 'Scanner/Scanner/String+Codes.swift', 'Scanner/Scanner/Error+Additions.swift'
   s.ios.framework  = 'AVFoundation', 'UIKit'
 
 end

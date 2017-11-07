@@ -36,12 +36,77 @@ public class Scanner: UIViewController {
 				.upce
 			]
 		}
+		
+		enum Durations {
+			static let popup: TimeInterval = 0.4
+		}
+		
+		enum Sizes {
+			static let popup: CGFloat = 50.0
+		}
 	}
 	
 	fileprivate var captureSession: AVCaptureSession?
 	fileprivate var previewLayer: AVCaptureVideoPreviewLayer?
 	fileprivate var codeView: UIView?
-	fileprivate let scannerType: ScannerType
+	fileprivate var popupBottom = NSLayoutConstraint()
+	fileprivate var recentCode: String?
+	fileprivate var isShowingPopup = false
+	
+	fileprivate lazy var popupLabel: UILabel = {
+		let label = UILabel()
+		label.translatesAutoresizingMaskIntoConstraints = false
+		label.text = popupText
+		label.textAlignment = textAlignment
+		label.textColor = textColor
+		label.backgroundColor = textBackgroundColor
+		label.font = textFont
+		label.numberOfLines = 0
+		label.lineBreakMode = .byWordWrapping
+		return label
+	}()
+	
+	public var popupText: String = "Tap to dismiss scanner" {
+		didSet {
+			popupLabel.text = popupText
+		}
+	}
+	
+	public var textAlignment: NSTextAlignment = .center {
+		didSet {
+			popupLabel.textAlignment = textAlignment
+		}
+	}
+	
+	public var textColor: UIColor = .white {
+		didSet {
+			popupLabel.textColor = textColor
+		}
+	}
+	
+	public var textFont: UIFont = UIFont.systemFont(ofSize: 20.0, weight: .semibold) {
+		didSet {
+			popupLabel.font = textFont
+		}
+	}
+	
+	public var textBackgroundColor: UIColor = UIColor.black.withAlphaComponent(0.8) {
+		didSet {
+			popupLabel.backgroundColor = textBackgroundColor
+		}
+	}
+	
+	public var squareBorderColor: UIColor = .green {
+		didSet {
+			codeView?.layer.borderColor = squareBorderColor.cgColor
+		}
+	}
+	
+	public var squareBackgroundColor: UIColor = .clear {
+		didSet {
+			codeView?.backgroundColor = squareBorderColor
+		}
+	}
 	
 	override public var prefersStatusBarHidden: Bool { return true }
 	override public var supportedInterfaceOrientations: UIInterfaceOrientationMask { return .portrait }
@@ -51,6 +116,8 @@ public class Scanner: UIViewController {
 		case barcode
 		case both
 	}
+	
+	fileprivate let scannerType: ScannerType
 	
 	public init(scannerType: ScannerType) {
 		self.scannerType = scannerType
@@ -134,6 +201,20 @@ public class Scanner: UIViewController {
 				view.addSubview(codeView)
 				view.bringSubview(toFront: codeView)
 			}
+			
+			view.addSubview(popupLabel)
+			
+			let intrinsicHeight = popupLabel.intrinsicContentSize.height
+			let popupLeft = popupLabel.leftAnchor.constraint(equalTo: view.leftAnchor)
+			let popupRight = popupLabel.rightAnchor.constraint(equalTo: view.rightAnchor)
+			let popupHeight = popupLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: Constants.Sizes.popup)
+			popupBottom = popupLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: intrinsicHeight > Constants.Sizes.popup ? intrinsicHeight : Constants.Sizes.popup)
+			
+			NSLayoutConstraint.activate([popupLeft, popupRight, popupHeight, popupBottom])
+			
+			let tap = UITapGestureRecognizer(target: self, action: #selector(tapAction(_:)))
+			tap.numberOfTapsRequired = 1
+			view.addGestureRecognizer(tap)
 		} catch {
 			handleError(errorType: .custom(error.localizedDescription))
 			return
@@ -150,6 +231,35 @@ public class Scanner: UIViewController {
 	
 	fileprivate func foundCode(_ code: String) {
 		print("found code:", code)
+		guard !isShowingPopup else { return }
+		recentCode = code
+		
+		view.layoutIfNeeded()
+		UIView.animate(withDuration: Constants.Durations.popup, animations: {
+			self.popupBottom.constant = 0.0
+			self.view.layoutIfNeeded()
+		}) { _ in
+			self.isShowingPopup = true
+		}
+	}
+	
+	fileprivate func hidePopup() {
+		guard isShowingPopup else { return }
+		recentCode = nil
+		
+		let intrinsicHeight = popupLabel.intrinsicContentSize.height
+		view.layoutIfNeeded()
+		UIView.animate(withDuration: Constants.Durations.popup, animations: {
+			self.popupBottom.constant = intrinsicHeight > Constants.Sizes.popup ? intrinsicHeight : Constants.Sizes.popup
+			self.view.layoutIfNeeded()
+		}) { _ in
+			self.isShowingPopup = false
+		}
+	}
+	
+	@objc fileprivate func tapAction(_ sender: UITapGestureRecognizer) {
+		guard isShowingPopup else { return }
+		dismiss(animated: true, completion: nil)
 	}
 }
 
@@ -172,6 +282,7 @@ extension Scanner: AVCaptureMetadataOutputObjectsDelegate {
 			foundCode(value)
 		} else {
 			codeView?.isHidden = true
+			hidePopup()
 		}
 	}
 }

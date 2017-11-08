@@ -82,26 +82,26 @@ class ViewController: UIViewController {
 	}
 	
 	@objc fileprivate func qrAction(_ sender: UIButton) {
-		let scanner = Scanner(scannerType: .qr)
+		let scanner = CodeScanner(scannerType: .qr)
 		scanner.delegate = self
 		present(scanner, animated: true, completion: nil)
 	}
 	
 	@objc fileprivate func barcodeAction(_ sender: UIButton) {
-		let scanner = Scanner(scannerType: .barcode)
+		let scanner = CodeScanner(scannerType: .barcode)
 		scanner.delegate = self
 		present(scanner, animated: true, completion: nil)
 	}
 	
 	@objc fileprivate func bothAction(_ sender: UIButton) {
-		let scanner = Scanner(scannerType: .both)
+		let scanner = CodeScanner(scannerType: .both)
 		scanner.delegate = self
 		present(scanner, animated: true, completion: nil)
 	}
 }
 
 extension ViewController: ScannerDelegate {
-	func scanner(_ scanner: Scanner, didScanCode code: String, codeType: Scanner.CodeType) {
+	func scanner(_ scanner: CodeScanner, didScanCode code: String, codeType: CodeType) {
 		var type = ""
 		switch codeType {
 		case .barcode:
@@ -112,15 +112,15 @@ extension ViewController: ScannerDelegate {
 		print("scanned code \(code) with type:", type)
 	}
 	
-	func scanner(_ scanner: Scanner, handleError error: NSError) {
+	func scanner(_ scanner: CodeScanner, handleError error: NSError) {
 		print("an error occured with the scanner. error:", error.localizedDescription)
 	}
 	
-	func scanner(_ scanner: Scanner, willDismissScanner: Bool) {
+	func scanner(_ scanner: CodeScanner, willDismissScanner: Bool) {
 		print("will dismiss scanner")
 	}
 	
-	func scanner(_ scanner: Scanner, didDismissScanner: Bool) {
+	func scanner(_ scanner: CodeScanner, didDismissScanner: Bool) {
 		print("did dismiss scanner")
 	}
 }

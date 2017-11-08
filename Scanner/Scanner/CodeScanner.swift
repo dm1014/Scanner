@@ -10,10 +10,21 @@ import UIKit
 import AVFoundation
 
 @objc public protocol ScannerDelegate: class {
-	func scanner(_ scanner: CodeScanner, didScanCode code: String, codeType: CodeScanner.CodeType)
+	func scanner(_ scanner: CodeScanner, didScanCode code: String, codeType: CodeType)
 	func scanner(_ scanner: CodeScanner, handleError error: NSError)
 	@objc optional func scanner(_ scanner: CodeScanner, willDismissScanner: Bool)
 	@objc optional func scanner(_ scanner: CodeScanner, didDismissScanner: Bool)
+}
+
+@objc public enum CodeType: Int {
+	case barcode
+	case qr
+}
+
+public enum ScannerType {
+	case barcode
+	case both
+	case qr
 }
 
 @objc public class CodeScanner: UIViewController {
@@ -117,17 +128,6 @@ import AVFoundation
 	
 	override public var prefersStatusBarHidden: Bool { return true }
 	override public var supportedInterfaceOrientations: UIInterfaceOrientationMask { return .portrait }
-	
-	@objc public enum CodeType: Int {
-		case barcode
-		case qr
-	}
-	
-	public enum ScannerType {
-		case barcode
-		case both
-		case qr
-	}
 	
 	fileprivate let scannerType: ScannerType
 	
@@ -245,6 +245,7 @@ import AVFoundation
 	
 	fileprivate func foundCode(_ code: String, codeType: CodeType) {
 		guard !isShowingPopup else { return }
+		isShowingPopup = true
 		recentCode = code
 		delegate?.scanner(self, didScanCode: code, codeType: codeType)
 		
@@ -252,13 +253,12 @@ import AVFoundation
 		UIView.animate(withDuration: Constants.Durations.popup, animations: {
 			self.popupBottom.constant = 0.0
 			self.view.layoutIfNeeded()
-		}) { _ in
-			self.isShowingPopup = true
-		}
+		})
 	}
 	
 	fileprivate func hidePopup() {
 		guard isShowingPopup else { return }
+		isShowingPopup = false
 		recentCode = nil
 		
 		let intrinsicHeight = popupLabel.intrinsicContentSize.height
@@ -266,9 +266,7 @@ import AVFoundation
 		UIView.animate(withDuration: Constants.Durations.popup, animations: {
 			self.popupBottom.constant = intrinsicHeight > Constants.Sizes.popup ? intrinsicHeight : Constants.Sizes.popup
 			self.view.layoutIfNeeded()
-		}) { _ in
-			self.isShowingPopup = false
-		}
+		})
 	}
 	
 	@objc fileprivate func tapAction(_ sender: UITapGestureRecognizer) {

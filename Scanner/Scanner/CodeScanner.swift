@@ -69,6 +69,7 @@ public enum ScannerType {
 	fileprivate var codeView: UIView?
 	fileprivate var popupBottom = NSLayoutConstraint()
 	fileprivate var recentCode: String?
+	fileprivate var recentType: CodeType?
 	fileprivate var isShowingPopup = false
 	
 	fileprivate lazy var popupLabel: UILabel = {
@@ -247,7 +248,7 @@ public enum ScannerType {
 		guard !isShowingPopup else { return }
 		isShowingPopup = true
 		recentCode = code
-		delegate?.scanner(self, didScanCode: code, codeType: codeType)
+		recentType = codeType
 		
 		view.layoutIfNeeded()
 		UIView.animate(withDuration: Constants.Durations.popup, animations: {
@@ -260,6 +261,7 @@ public enum ScannerType {
 		guard isShowingPopup else { return }
 		isShowingPopup = false
 		recentCode = nil
+		recentType = nil
 		
 		let intrinsicHeight = popupLabel.intrinsicContentSize.height
 		view.layoutIfNeeded()
@@ -270,7 +272,8 @@ public enum ScannerType {
 	}
 	
 	@objc fileprivate func tapAction(_ sender: UITapGestureRecognizer) {
-		guard isShowingPopup else { return }
+		guard isShowingPopup, let code = recentCode, let type = recentType else { return }
+		delegate?.scanner(self, didScanCode: code, codeType: type)
 		delegate?.scanner?(self, willDismissScanner: true)
 		
 		dismiss(animated: true, completion: { [weak self] in

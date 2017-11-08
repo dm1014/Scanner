@@ -59,8 +59,14 @@ public enum ScannerType {
 			static let popup: TimeInterval = 0.4
 		}
 		
+		enum Edges {
+			static let cancel = UIEdgeInsets(top: 0.0, left: 8.0, bottom: 0.0, right: 0.0)
+		}
+		
 		enum Sizes {
 			static let popup: CGFloat = 50.0
+			static let bar: CGFloat = 64.0
+			static let cancel: CGFloat = 44.0
 		}
 	}
 	
@@ -71,6 +77,22 @@ public enum ScannerType {
 	fileprivate var recentCode: String?
 	fileprivate var recentType: CodeType?
 	fileprivate var isShowingPopup = false
+	
+	fileprivate lazy var barView: UIView = {
+		let view = UIView()
+		view.translatesAutoresizingMaskIntoConstraints = false
+		view.backgroundColor = textBackgroundColor
+		return view
+	}()
+	
+	fileprivate lazy var cancelButton: UIButton = {
+		let button = UIButton()
+		button.translatesAutoresizingMaskIntoConstraints = false
+		button.setTitle("Cancel", for: .normal)
+		button.setTitleColor(UIColor.white, for: .normal)
+		button.setTitleColor(UIColor.white.withAlphaComponent(0.1), for: .highlighted)
+		return button
+	}()
 	
 	fileprivate lazy var popupLabel: UILabel = {
 		let label = UILabel()
@@ -84,6 +106,25 @@ public enum ScannerType {
 		label.lineBreakMode = .byWordWrapping
 		return label
 	}()
+	
+	public var cancelBackgroundColor: UIColor = UIColor.black.withAlphaComponent(0.8) {
+		didSet {
+			barView.backgroundColor = cancelBackgroundColor
+		}
+	}
+	
+	public var cancelText: String = "Cancel" {
+		didSet {
+			cancelButton.setTitle(cancelText, for: .normal)
+		}
+	}
+	
+	public var cancelTextColor: UIColor = .white {
+		didSet {
+			cancelButton.setTitleColor(cancelTextColor, for: .normal)
+			cancelButton.setTitleColor(cancelTextColor.withAlphaComponent(0.1), for: .highlighted)
+		}
+	}
 	
 	public var popupText: String = "Tap to dismiss scanner" {
 		didSet {
@@ -127,7 +168,7 @@ public enum ScannerType {
 		}
 	}
 	
-	override public var prefersStatusBarHidden: Bool { return true }
+	public override var preferredStatusBarStyle: UIStatusBarStyle { return .lightContent }
 	override public var supportedInterfaceOrientations: UIInterfaceOrientationMask { return .portrait }
 	
 	fileprivate let scannerType: ScannerType
@@ -220,6 +261,10 @@ public enum ScannerType {
 			}
 			
 			view.addSubview(popupLabel)
+			view.addSubview(barView)
+			barView.addSubview(cancelButton)
+			
+			cancelButton.addTarget(self, action: #selector(cancelAction(_:)), for: .touchUpInside)
 			
 			let intrinsicHeight = popupLabel.intrinsicContentSize.height
 			let popupLeft = popupLabel.leftAnchor.constraint(equalTo: view.leftAnchor)
@@ -227,7 +272,18 @@ public enum ScannerType {
 			let popupHeight = popupLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: Constants.Sizes.popup)
 			popupBottom = popupLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: intrinsicHeight > Constants.Sizes.popup ? intrinsicHeight : Constants.Sizes.popup)
 			
-			NSLayoutConstraint.activate([popupLeft, popupRight, popupHeight, popupBottom])
+			let barTop = barView.topAnchor.constraint(equalTo: view.topAnchor)
+			let barLeft = barView.leftAnchor.constraint(equalTo: view.leftAnchor)
+			let barRight = barView.rightAnchor.constraint(equalTo: view.rightAnchor)
+			let barHeight = barView.heightAnchor.constraint(equalToConstant: Constants.Sizes.bar)
+			
+			let cancelLeft = cancelButton.leftAnchor.constraint(equalTo: barView.leftAnchor, constant: Constants.Edges.cancel.left)
+			let cancelBottom = cancelButton.bottomAnchor.constraint(equalTo: barView.bottomAnchor)
+			let cancelHeight = cancelButton.heightAnchor.constraint(equalToConstant: Constants.Sizes.cancel)
+			
+			NSLayoutConstraint.activate([popupLeft, popupRight, popupHeight, popupBottom,
+										 barTop, barLeft, barRight, barHeight,
+										 cancelLeft, cancelBottom, cancelHeight])
 			
 			let tap = UITapGestureRecognizer(target: self, action: #selector(tapAction(_:)))
 			tap.numberOfTapsRequired = 1
@@ -280,6 +336,15 @@ public enum ScannerType {
 			guard let weakSelf = self else { return }
 			weakSelf.delegate?.scanner?(weakSelf, didDismissScanner: true)
 		})
+	}
+	
+	@objc fileprivate func cancelAction(_ sender: UIButton) {
+		delegate?.scanner?(self, willDismissScanner: true)
+		
+		dismiss(animated: true) { [weak self] in
+			guard let weakSelf = self else { return }
+			weakSelf.delegate?.scanner?(weakSelf, didDismissScanner: true)
+		}
 	}
 }
 

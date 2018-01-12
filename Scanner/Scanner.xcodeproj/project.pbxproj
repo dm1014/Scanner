@@ -72,20 +72,45 @@
 			children = (
 				D564550B1FB2062C000DBDB4 /* AppDelegate.swift */,
 				D5D7B14A1FB20E63001A0FE5 /* ViewController.swift */,
-				D564550D1FB2062C000DBDB4 /* CodeScanner.swift */,
-				D56F317E1FD89AE900D316A4 /* CIVideoFilter.swift */,
-				D56F317F1FD89AE900D316A4 /* DocuScanner.swift */,
-				D56F31821FD89AF400D316A4 /* CircleButton.swift */,
-				D56F31851FD89AF400D316A4 /* FlashButton.swift */,
-				D56F31831FD89AF400D316A4 /* GrayscaleView.swift */,
-				D592D3091FD9EF6100BAC4AE /* XButton.swift */,
-				D5D7B1511FB21F82001A0FE5 /* String+Codes.swift */,
-				D5D7B1481FB20BDB001A0FE5 /* Error+Additions.swift */,
+				D58F2C9820093B73004A7427 /* Source */,
 				D56455121FB2062C000DBDB4 /* Assets.xcassets */,
 				D56455141FB2062C000DBDB4 /* LaunchScreen.storyboard */,
 				D56455171FB2062C000DBDB4 /* Info.plist */,
 			);
 			path = Scanner;
+			sourceTree = "<group>";
+		};
+		D58F2C9820093B73004A7427 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				D564550D1FB2062C000DBDB4 /* CodeScanner.swift */,
+				D56F317E1FD89AE900D316A4 /* CIVideoFilter.swift */,
+				D56F317F1FD89AE900D316A4 /* DocuScanner.swift */,
+				D58F2C9A20093BA3004A7427 /* Views */,
+				D58F2C9920093B93004A7427 /* Extensions */,
+			);
+			name = Source;
+			path = "New Group";
+			sourceTree = "<group>";
+		};
+		D58F2C9920093B93004A7427 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				D5D7B1511FB21F82001A0FE5 /* String+Codes.swift */,
+				D5D7B1481FB20BDB001A0FE5 /* Error+Additions.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		D58F2C9A20093BA3004A7427 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				D56F31821FD89AF400D316A4 /* CircleButton.swift */,
+				D56F31851FD89AF400D316A4 /* FlashButton.swift */,
+				D56F31831FD89AF400D316A4 /* GrayscaleView.swift */,
+				D592D3091FD9EF6100BAC4AE /* XButton.swift */,
+			);
+			path = Views;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

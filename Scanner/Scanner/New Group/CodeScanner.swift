@@ -8,6 +8,7 @@
 
 import UIKit
 import AVFoundation
+import AudioToolbox
 
 @objc public protocol ScannerDelegate: class {
 	func scanner(_ scanner: CodeScanner, didScanCode code: String, codeType: CodeType)
@@ -55,118 +56,67 @@ public enum ScannerType {
 			]
 		}
 		
+		enum Defaults {
+			static let alpha: CGFloat = 0.25
+		}
+		
 		enum Durations {
 			static let popup: TimeInterval = 0.4
 		}
 		
 		enum Edges {
-			static let cancel = UIEdgeInsets(top: 0.0, left: 8.0, bottom: 0.0, right: 0.0)
+			static let button = UIEdgeInsets(top: 0.0, left: 0.0, bottom: 20.0, right: 0.0)
+			static let cancel = UIEdgeInsets(top: 20.0, left: 16.0, bottom: 0.0, right: 0.0)
 		}
 		
 		enum Sizes {
 			static let popup: CGFloat = 50.0
 			static let bar: CGFloat = 64.0
 			static let cancel: CGFloat = 44.0
+			static let smallLineWidth: CGFloat = 1.5
+			static let normalLineWidth: CGFloat = 3.0
+			static let buttonSize: CGFloat = UIDevice.current.userInterfaceIdiom == .pad ? 96.0 : 72.0
 		}
 	}
 	
 	fileprivate var captureSession: AVCaptureSession?
 	fileprivate var previewLayer: AVCaptureVideoPreviewLayer?
 	fileprivate var codeView: UIView?
-	fileprivate var popupBottom = NSLayoutConstraint()
 	fileprivate var recentCode: String?
 	fileprivate var recentType: CodeType?
-	fileprivate var isShowingPopup = false
 	
-	fileprivate lazy var barView: UIView = {
-		let view = UIView()
-		view.translatesAutoresizingMaskIntoConstraints = false
-		view.backgroundColor = textBackgroundColor
-		return view
-	}()
-	
-	fileprivate lazy var cancelButton: UIButton = {
-		let button = UIButton()
+	fileprivate let grayscaleButton: GrayscaleView = {
+		let button = GrayscaleView()
 		button.translatesAutoresizingMaskIntoConstraints = false
-		button.setTitle("Cancel", for: .normal)
-		button.setTitleColor(UIColor.white, for: .normal)
-		button.setTitleColor(UIColor.white.withAlphaComponent(0.1), for: .highlighted)
+		button.layer.cornerRadius = Constants.Sizes.buttonSize / 4.0
+		button.layer.masksToBounds = true
+		button.layer.borderColor = UIColor.white.cgColor
+		button.layer.borderWidth = Constants.Sizes.smallLineWidth
 		return button
 	}()
 	
-	fileprivate lazy var popupLabel: UILabel = {
-		let label = UILabel()
-		label.translatesAutoresizingMaskIntoConstraints = false
-		label.text = popupText
-		label.textAlignment = textAlignment
-		label.textColor = textColor
-		label.backgroundColor = textBackgroundColor
-		label.font = textFont
-		label.numberOfLines = 0
-		label.lineBreakMode = .byWordWrapping
-		return label
+	fileprivate let cancelButton: UIButton = {
+		let button = XButton(color: .white, frame: .zero)
+		button.translatesAutoresizingMaskIntoConstraints = false
+		return button
 	}()
 	
-	public var cancelBackgroundColor: UIColor = UIColor.black.withAlphaComponent(0.8) {
-		didSet {
-			barView.backgroundColor = cancelBackgroundColor
-		}
-	}
+	fileprivate let torchButton: FlashButton = {
+		let button = FlashButton(strokeColor: .white, fillColor: UIColor.white.withAlphaComponent(Constants.Defaults.alpha), lineWidth: Constants.Sizes.smallLineWidth, frame: .zero)
+		button.translatesAutoresizingMaskIntoConstraints = false
+		return button
+	}()
 	
-	public var cancelText: String = "Cancel" {
-		didSet {
-			cancelButton.setTitle(cancelText, for: .normal)
-		}
-	}
-	
-	public var cancelTextColor: UIColor = .white {
-		didSet {
-			cancelButton.setTitleColor(cancelTextColor, for: .normal)
-			cancelButton.setTitleColor(cancelTextColor.withAlphaComponent(0.1), for: .highlighted)
-		}
-	}
-	
-	public var popupText: String = "Tap to dismiss scanner" {
-		didSet {
-			popupLabel.text = popupText
-		}
-	}
-	
-	public var textAlignment: NSTextAlignment = .center {
-		didSet {
-			popupLabel.textAlignment = textAlignment
-		}
-	}
-	
-	public var textColor: UIColor = .white {
-		didSet {
-			popupLabel.textColor = textColor
-		}
-	}
-	
-	public var textFont: UIFont = UIFont.systemFont(ofSize: 20.0, weight: .semibold) {
-		didSet {
-			popupLabel.font = textFont
-		}
-	}
-	
-	public var textBackgroundColor: UIColor = UIColor.black.withAlphaComponent(0.8) {
-		didSet {
-			popupLabel.backgroundColor = textBackgroundColor
-		}
-	}
-	
-	public var squareBorderColor: UIColor = .green {
-		didSet {
-			codeView?.layer.borderColor = squareBorderColor.cgColor
-		}
-	}
-	
-	public var squareBackgroundColor: UIColor = .clear {
-		didSet {
-			codeView?.backgroundColor = squareBorderColor
-		}
-	}
+	fileprivate let touchView: UIView = {
+		let view = UIView(frame: CGRect(x: 0.0, y: 0.0, width: Constants.Sizes.buttonSize / 2.0, height: Constants.Sizes.buttonSize / 2.0))
+		view.backgroundColor = UIColor.white.withAlphaComponent(Constants.Defaults.alpha)
+		view.layer.borderWidth = Constants.Sizes.smallLineWidth
+		view.layer.borderColor = UIColor.white.cgColor
+		view.layer.cornerRadius = Constants.Sizes.buttonSize / 4.0
+		view.layer.masksToBounds = true
+		view.alpha = 0.0
+		return view
+	}()
 	
 	public override var preferredStatusBarStyle: UIStatusBarStyle { return .lightContent }
 	override public var supportedInterfaceOrientations: UIInterfaceOrientationMask { return .portrait }
@@ -260,34 +210,43 @@ public enum ScannerType {
 				view.bringSubview(toFront: codeView)
 			}
 			
-			view.addSubview(popupLabel)
-			view.addSubview(barView)
-			barView.addSubview(cancelButton)
+			view.backgroundColor = .black
 			
 			cancelButton.addTarget(self, action: #selector(cancelAction(_:)), for: .touchUpInside)
 			
-			let intrinsicHeight = popupLabel.intrinsicContentSize.height
-			let popupLeft = popupLabel.leftAnchor.constraint(equalTo: view.leftAnchor)
-			let popupRight = popupLabel.rightAnchor.constraint(equalTo: view.rightAnchor)
-			let popupHeight = popupLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: Constants.Sizes.popup)
-			popupBottom = popupLabel.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: intrinsicHeight > Constants.Sizes.popup ? intrinsicHeight : Constants.Sizes.popup)
+			view.addSubview(cancelButton)
+			view.addSubview(touchView)
 			
-			let barTop = barView.topAnchor.constraint(equalTo: view.topAnchor)
-			let barLeft = barView.leftAnchor.constraint(equalTo: view.leftAnchor)
-			let barRight = barView.rightAnchor.constraint(equalTo: view.rightAnchor)
-			let barHeight = barView.heightAnchor.constraint(equalToConstant: Constants.Sizes.bar)
+			if #available(iOS 11.0, *) {
+				cancelButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: Constants.Edges.cancel.top).isActive = true
+			} else {
+				cancelButton.topAnchor.constraint(equalTo: view.topAnchor, constant: Constants.Edges.cancel.top).isActive = true
+			}
 			
-			let cancelLeft = cancelButton.leftAnchor.constraint(equalTo: barView.leftAnchor, constant: Constants.Edges.cancel.left)
-			let cancelBottom = cancelButton.bottomAnchor.constraint(equalTo: barView.bottomAnchor)
+			let cancelLeft = cancelButton.leftAnchor.constraint(equalTo: view.leftAnchor, constant: Constants.Edges.cancel.left)
+			let cancelWidth = cancelButton.widthAnchor.constraint(equalToConstant: Constants.Sizes.cancel)
 			let cancelHeight = cancelButton.heightAnchor.constraint(equalToConstant: Constants.Sizes.cancel)
 			
-			NSLayoutConstraint.activate([popupLeft, popupRight, popupHeight, popupBottom,
-										 barTop, barLeft, barRight, barHeight,
-										 cancelLeft, cancelBottom, cancelHeight])
+			NSLayoutConstraint.activate([cancelLeft, cancelWidth, cancelHeight])
 			
-			let tap = UITapGestureRecognizer(target: self, action: #selector(tapAction(_:)))
-			tap.numberOfTapsRequired = 1
-			view.addGestureRecognizer(tap)
+			if let device = AVCaptureDevice.default(for: AVMediaType.video), device.hasTorch {
+				torchButton.addTarget(self, action: #selector(toggleTorch(sender:)), for: .touchUpInside)
+				
+				view.addSubview(torchButton)
+				
+				let torchWidth = torchButton.widthAnchor.constraint(equalToConstant: Constants.Sizes.buttonSize / 2.0)
+				let torchHeight = torchButton.heightAnchor.constraint(equalToConstant: Constants.Sizes.buttonSize / 2.0)
+				let torchCenterX = torchButton.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: (view.bounds.width / -4.0) - (Constants.Sizes.buttonSize / 2.0) / 2.0)
+				
+				if #available(iOS 11, *) {
+					torchButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -Constants.Edges.button.bottom).isActive = true
+				} else {
+					torchButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -Constants.Edges.button.bottom).isActive = true
+				}
+				
+				NSLayoutConstraint.activate([torchWidth, torchHeight, torchCenterX])
+			}
+
 		} catch {
 			handleError(errorType: .custom(error.localizedDescription))
 			return
@@ -301,41 +260,13 @@ public enum ScannerType {
 	}
 	
 	fileprivate func foundCode(_ code: String, codeType: CodeType) {
-		guard !isShowingPopup else { return }
-		isShowingPopup = true
-		recentCode = code
-		recentType = codeType
-		
-		view.layoutIfNeeded()
-		UIView.animate(withDuration: Constants.Durations.popup, animations: {
-			self.popupBottom.constant = 0.0
-			self.view.layoutIfNeeded()
-		})
+		AudioServicesPlayAlertSound(kSystemSoundID_Vibrate)
+		delegate?.scanner(self, didScanCode: code, codeType: codeType)
 	}
 	
-	fileprivate func hidePopup() {
-		guard isShowingPopup else { return }
-		isShowingPopup = false
+	fileprivate func handleNoCode() {
 		recentCode = nil
 		recentType = nil
-		
-		let intrinsicHeight = popupLabel.intrinsicContentSize.height
-		view.layoutIfNeeded()
-		UIView.animate(withDuration: Constants.Durations.popup, animations: {
-			self.popupBottom.constant = intrinsicHeight > Constants.Sizes.popup ? intrinsicHeight : Constants.Sizes.popup
-			self.view.layoutIfNeeded()
-		})
-	}
-	
-	@objc fileprivate func tapAction(_ sender: UITapGestureRecognizer) {
-		guard isShowingPopup, let code = recentCode, let type = recentType else { return }
-		delegate?.scanner(self, didScanCode: code, codeType: type)
-		delegate?.scanner?(self, willDismissScanner: true)
-		
-		dismiss(animated: true, completion: { [weak self] in
-			guard let weakSelf = self else { return }
-			weakSelf.delegate?.scanner?(weakSelf, didDismissScanner: true)
-		})
 	}
 	
 	@objc fileprivate func cancelAction(_ sender: UIButton) {
@@ -345,6 +276,48 @@ public enum ScannerType {
 			guard let weakSelf = self else { return }
 			weakSelf.delegate?.scanner?(weakSelf, didDismissScanner: true)
 		}
+	}
+	
+	@objc fileprivate func toggleTorch(sender: UIButton) {
+		guard let device = AVCaptureDevice.default(for: AVMediaType.video), device.hasTorch else { return }
+		
+		do {
+			try device.lockForConfiguration()
+			device.torchMode = device.isTorchActive ? .off : .on
+			device.unlockForConfiguration()
+		} catch {
+			print("Torch could not be used")
+		}
+	}
+	
+	override public func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+		guard let touch = touches.first, let device = AVCaptureDevice.default(for: AVMediaType.video), let vf = previewLayer else { return }
+		
+		let screenSize = vf.bounds.size
+		let x = touch.location(in: view).y / screenSize.height
+		let y = 1.0 - touch.location(in: view).x / screenSize.width
+		let focusPoint = CGPoint(x: x, y: y)
+		
+		do {
+			try device.lockForConfiguration()
+			
+			device.focusPointOfInterest = focusPoint
+			device.focusMode = .autoFocus
+			device.exposurePointOfInterest = focusPoint
+			device.exposureMode = .continuousAutoExposure
+			device.unlockForConfiguration()
+		} catch { }
+	}
+	
+	override public func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+		guard let touch = touches.first else { return }
+		
+		touchView.center = touch.location(in: view)
+		touchView.alpha = 1.0
+		
+		UIView.animate(withDuration: 0.5, animations: {
+			self.touchView.alpha = 0.0
+		})
 	}
 }
 
@@ -368,11 +341,10 @@ extension CodeScanner: AVCaptureMetadataOutputObjectsDelegate {
 			codeView?.isHidden = false
 			codeView?.frame = transformedObject.bounds
 
-			
 			foundCode(value, codeType: codeType)
 		} else {
 			codeView?.isHidden = true
-			hidePopup()
+			handleNoCode()
 		}
 	}
 }

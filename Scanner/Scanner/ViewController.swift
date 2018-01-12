@@ -110,6 +110,11 @@ extension ViewController: ScannerDelegate {
 			type = "QR"
 		}
 		print("scanned code \(code) with type:", type)
+		scanner.dismiss(animated: true) {
+			let alert = UIAlertController(title: "\(type) Scanned", message: code, preferredStyle: .alert)
+			alert.addAction(UIAlertAction(title: "Okay", style: .default, handler: nil))
+			self.present(alert, animated: true, completion: nil)
+		}
 	}
 	
 	func scanner(_ scanner: CodeScanner, handleError error: NSError) {

@@ -105,10 +105,16 @@ public final class DocuScanner: UIViewController {
 		
 		view.backgroundColor = .black
 		
-		let cancelButton = UIBarButtonItem(image: #imageLiteral(resourceName: "X"), style: .plain, target: self, action: #selector(cancelAction(_:)))
-		navigationItem.leftBarButtonItem = cancelButton
 		
 		setupViews()
+	}
+	
+	public override func viewDidLoad() {
+		super.viewDidLoad()
+		
+		let cancelButton = UIBarButtonItem(image: #imageLiteral(resourceName: "X"), style: .plain, target: self, action: #selector(cancelAction(_:)))
+		navigationItem.leftBarButtonItem = cancelButton
+
 	}
 	
 	required public init?(coder aDecoder: NSCoder) {

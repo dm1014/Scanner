@@ -11,6 +11,12 @@
 		D564550E1FB2062C000DBDB4 /* CodeScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = D564550D1FB2062C000DBDB4 /* CodeScanner.swift */; };
 		D56455131FB2062C000DBDB4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D56455121FB2062C000DBDB4 /* Assets.xcassets */; };
 		D56455161FB2062C000DBDB4 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = D56455141FB2062C000DBDB4 /* LaunchScreen.storyboard */; };
+		D56F31801FD89AE900D316A4 /* CIVideoFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D56F317E1FD89AE900D316A4 /* CIVideoFilter.swift */; };
+		D56F31811FD89AE900D316A4 /* DocuScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = D56F317F1FD89AE900D316A4 /* DocuScanner.swift */; };
+		D56F31861FD89AF400D316A4 /* CircleButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = D56F31821FD89AF400D316A4 /* CircleButton.swift */; };
+		D56F31871FD89AF400D316A4 /* GrayscaleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D56F31831FD89AF400D316A4 /* GrayscaleView.swift */; };
+		D56F31891FD89AF400D316A4 /* FlashButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = D56F31851FD89AF400D316A4 /* FlashButton.swift */; };
+		D592D30A1FD9EF6100BAC4AE /* XButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = D592D3091FD9EF6100BAC4AE /* XButton.swift */; };
 		D5D7B1491FB20BDB001A0FE5 /* Error+Additions.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5D7B1481FB20BDB001A0FE5 /* Error+Additions.swift */; };
 		D5D7B14B1FB20E63001A0FE5 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5D7B14A1FB20E63001A0FE5 /* ViewController.swift */; };
 		D5D7B1521FB21F82001A0FE5 /* String+Codes.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5D7B1511FB21F82001A0FE5 /* String+Codes.swift */; };
@@ -23,6 +29,12 @@
 		D56455121FB2062C000DBDB4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D56455151FB2062C000DBDB4 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		D56455171FB2062C000DBDB4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		D56F317E1FD89AE900D316A4 /* CIVideoFilter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CIVideoFilter.swift; sourceTree = "<group>"; };
+		D56F317F1FD89AE900D316A4 /* DocuScanner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DocuScanner.swift; sourceTree = "<group>"; };
+		D56F31821FD89AF400D316A4 /* CircleButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CircleButton.swift; sourceTree = "<group>"; };
+		D56F31831FD89AF400D316A4 /* GrayscaleView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GrayscaleView.swift; sourceTree = "<group>"; };
+		D56F31851FD89AF400D316A4 /* FlashButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FlashButton.swift; sourceTree = "<group>"; };
+		D592D3091FD9EF6100BAC4AE /* XButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XButton.swift; sourceTree = "<group>"; };
 		D5D7B1481FB20BDB001A0FE5 /* Error+Additions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Error+Additions.swift"; sourceTree = "<group>"; };
 		D5D7B14A1FB20E63001A0FE5 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		D5D7B1511FB21F82001A0FE5 /* String+Codes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Codes.swift"; sourceTree = "<group>"; };
@@ -61,6 +73,12 @@
 				D564550B1FB2062C000DBDB4 /* AppDelegate.swift */,
 				D5D7B14A1FB20E63001A0FE5 /* ViewController.swift */,
 				D564550D1FB2062C000DBDB4 /* CodeScanner.swift */,
+				D56F317E1FD89AE900D316A4 /* CIVideoFilter.swift */,
+				D56F317F1FD89AE900D316A4 /* DocuScanner.swift */,
+				D56F31821FD89AF400D316A4 /* CircleButton.swift */,
+				D56F31851FD89AF400D316A4 /* FlashButton.swift */,
+				D56F31831FD89AF400D316A4 /* GrayscaleView.swift */,
+				D592D3091FD9EF6100BAC4AE /* XButton.swift */,
 				D5D7B1511FB21F82001A0FE5 /* String+Codes.swift */,
 				D5D7B1481FB20BDB001A0FE5 /* Error+Additions.swift */,
 				D56455121FB2062C000DBDB4 /* Assets.xcassets */,
@@ -142,7 +160,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				D5D7B1521FB21F82001A0FE5 /* String+Codes.swift in Sources */,
+				D56F31891FD89AF400D316A4 /* FlashButton.swift in Sources */,
+				D592D30A1FD9EF6100BAC4AE /* XButton.swift in Sources */,
+				D56F31871FD89AF400D316A4 /* GrayscaleView.swift in Sources */,
+				D56F31801FD89AE900D316A4 /* CIVideoFilter.swift in Sources */,
 				D564550E1FB2062C000DBDB4 /* CodeScanner.swift in Sources */,
+				D56F31861FD89AF400D316A4 /* CircleButton.swift in Sources */,
+				D56F31811FD89AE900D316A4 /* DocuScanner.swift in Sources */,
 				D5D7B1491FB20BDB001A0FE5 /* Error+Additions.swift in Sources */,
 				D5D7B14B1FB20E63001A0FE5 /* ViewController.swift in Sources */,
 				D564550C1FB2062C000DBDB4 /* AppDelegate.swift in Sources */,

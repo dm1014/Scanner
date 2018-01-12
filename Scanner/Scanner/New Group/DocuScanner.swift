@@ -10,13 +10,14 @@ import UIKit
 import AVFoundation
 import CoreImage
 
-protocol DocuScannerDelegate: class {
-    func capturedImage(image: UIImage)
-    func noDocumentDetected()
-    func failedToStartSession(error: Error?)
+@objc public protocol DocuScannerDelegate: class {
+	func docuScanner(_ scanner: DocuScanner, captured image: UIImage)
+	func docuScanner(_ scanner: DocuScanner, handleError error: Error?)
+	@objc optional func willDismissScanner(_ scanner: DocuScanner)
+	@objc optional func didDismissScanner(_ scanner: DocuScanner)
 }
 
-final class DocuScanner: UIViewController {
+public final class DocuScanner: UIViewController {
     fileprivate struct Corners {
         let topLeft: CGPoint
         let topRight: CGPoint
@@ -97,19 +98,30 @@ final class DocuScanner: UIViewController {
     fileprivate var hasEnabledGrayscale = false
     fileprivate var currentAngle: CGFloat = 0.0
     
-    weak var docuDelegate: DocuScannerDelegate?
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        view.backgroundColor = .black
-        
-        captureButton.addTarget(self, action: #selector(captureImage(sender:)), for: .touchUpInside)
-        grayscaleButton.addTarget(self, action: #selector(handleGrayscale(sender:)), for: .touchUpInside)
-        
+    public weak var delegate: DocuScannerDelegate?
+	
+	public init() {
+		super.init(nibName: nil, bundle: nil)
+		
+		view.backgroundColor = .black
+		
+		let cancelButton = UIBarButtonItem(image: #imageLiteral(resourceName: "X"), style: .plain, target: self, action: #selector(cancelAction(_:)))
+		navigationItem.leftBarButtonItem = cancelButton
+		
+		setupViews()
+	}
+	
+	required public init?(coder aDecoder: NSCoder) {
+		fatalError("init(coder:) has not been implemented")
+	}
+	
+    fileprivate func setupViews() {
         view.addSubview(captureButton)
         view.addSubview(grayscaleButton)
         view.addSubview(touchView)
+
+		captureButton.addTarget(self, action: #selector(captureImage(sender:)), for: .touchUpInside)
+		grayscaleButton.addTarget(self, action: #selector(handleGrayscale(sender:)), for: .touchUpInside)
         
         let capWidth = captureButton.widthAnchor.constraint(equalToConstant: Constants.buttonSize)
         let capHeight = captureButton.heightAnchor.constraint(equalToConstant: Constants.buttonSize)
@@ -145,7 +157,7 @@ final class DocuScanner: UIViewController {
         do {
             try videoFilter?.startFiltering()
         } catch {
-            docuDelegate?.failedToStartSession(error: error)
+            delegate?.docuScanner(self, handleError: error)
         }
     }
     
@@ -178,10 +190,7 @@ final class DocuScanner: UIViewController {
     }
     
     @objc fileprivate func captureImage(sender: UIButton) {
-        guard let image = videoImage, let corners = overlayCorners else {
-            docuDelegate?.noDocumentDetected()
-            return
-        }
+        guard let image = videoImage, let corners = overlayCorners else { return }
         
         let x = min(corners.topLeft.x, corners.bottomLeft.x)
         let y = min(corners.topLeft.y, corners.topRight.y)
@@ -189,9 +198,10 @@ final class DocuScanner: UIViewController {
         let height = max(corners.bottomLeft.y, corners.bottomRight.y) - y
         
         let cropped = image.cropped(to: CGRect(x: x, y: y, width: width, height: height))
-        let cgImage = videoFilter?.renderContext.createCGImage(cropped, from: cropped.extent)
-        
-        docuDelegate?.capturedImage(image: UIImage(cgImage: cgImage!, scale: 1.0, orientation: UIImageOrientation.right))
+		
+		guard let cgImage = videoFilter?.renderContext.createCGImage(cropped, from: cropped.extent) else { return }
+		let capturedImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: .right)
+        delegate?.docuScanner(self, captured: capturedImage)
     }
     
     @objc fileprivate func handleGrayscale(sender: UIButton) {
@@ -222,8 +232,17 @@ final class DocuScanner: UIViewController {
             print("Torch could not be used")
         }
     }
+	
+	@objc fileprivate func cancelAction(_ sender: UIBarButtonItem) {
+		delegate?.willDismissScanner?(self)
+		
+		dismiss(animated: true) { [weak self] in
+			guard let weakSelf = self else { return }
+			weakSelf.delegate?.didDismissScanner?(weakSelf)
+		}
+	}
     
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+	override public func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first, let device = AVCaptureDevice.default(for: AVMediaType.video), let vf = videoFilter else { return }
         
         let videoView = vf.videoDisplayView
@@ -243,7 +262,7 @@ final class DocuScanner: UIViewController {
         } catch { }
     }
     
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+	override public func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         
         touchView.center = touch.location(in: view)

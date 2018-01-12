@@ -60,4 +60,9 @@ class FlashButton: UIButton {
         fillColor.setFill()
         flashPath.fill()
     }
+	
+	public func unfill() {
+		UIColor.clear.setFill()
+		
+	}
 }

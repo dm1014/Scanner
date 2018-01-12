@@ -13,8 +13,8 @@ import AudioToolbox
 @objc public protocol ScannerDelegate: class {
 	func scanner(_ scanner: CodeScanner, didScanCode code: String, codeType: CodeType)
 	func scanner(_ scanner: CodeScanner, handleError error: NSError)
-	@objc optional func scanner(_ scanner: CodeScanner, willDismissScanner: Bool)
-	@objc optional func scanner(_ scanner: CodeScanner, didDismissScanner: Bool)
+	@objc optional func willDismissScanner(_ scanner: CodeScanner)
+	@objc optional func didDismissScanner(_ scanner: CodeScanner)
 }
 
 @objc public enum CodeType: Int {
@@ -66,13 +66,13 @@ public enum ScannerType {
 		
 		enum Edges {
 			static let button = UIEdgeInsets(top: 0.0, left: 0.0, bottom: 20.0, right: 0.0)
-			static let cancel = UIEdgeInsets(top: 20.0, left: 16.0, bottom: 0.0, right: 0.0)
+			static let cancel = UIEdgeInsets(top: 0.0, left: 8.0, bottom: 0.0, right: 0.0)
 		}
 		
 		enum Sizes {
 			static let popup: CGFloat = 50.0
 			static let bar: CGFloat = 64.0
-			static let cancel: CGFloat = 44.0
+			static let cancel: CGFloat = 28.0
 			static let smallLineWidth: CGFloat = 1.5
 			static let normalLineWidth: CGFloat = 3.0
 			static let buttonSize: CGFloat = UIDevice.current.userInterfaceIdiom == .pad ? 96.0 : 72.0
@@ -92,12 +92,6 @@ public enum ScannerType {
 		button.layer.masksToBounds = true
 		button.layer.borderColor = UIColor.white.cgColor
 		button.layer.borderWidth = Constants.Sizes.smallLineWidth
-		return button
-	}()
-	
-	fileprivate let cancelButton: UIButton = {
-		let button = XButton(color: .white, frame: .zero)
-		button.translatesAutoresizingMaskIntoConstraints = false
 		return button
 	}()
 	
@@ -129,16 +123,17 @@ public enum ScannerType {
 		self.scannerType = scannerType
 		
 		super.init(nibName: nil, bundle: nil)
+		
+		view.backgroundColor = .black
+		
+		let cancelButton = UIBarButtonItem(image: #imageLiteral(resourceName: "X"), style: .plain, target: self, action: #selector(cancelAction(_:)))
+		navigationItem.leftBarButtonItem = cancelButton
+		
+		setupCamera()
 	}
 
 	required public init?(coder aDecoder: NSCoder) {
 		fatalError("init(coder:) has not been implemented")
-	}
-
-	public override func viewDidLoad() {
-		super.viewDidLoad()
-	
-		setupViews()
 	}
 	
 	public override func viewWillAppear(_ animated: Bool) {
@@ -157,7 +152,7 @@ public enum ScannerType {
 		}
 	}
 	
-	fileprivate func setupViews() {
+	fileprivate func setupCamera() {
 		guard let captureDevice = AVCaptureDevice.default(for: .video) else {
 			handleError(errorType: .noCamera)
 			return
@@ -202,54 +197,40 @@ public enum ScannerType {
 			captureSession = session
 			captureSession?.startRunning()
 			
-			codeView = UIView()
-			if let codeView = codeView {
-				codeView.layer.borderColor = UIColor.green.cgColor
-				codeView.layer.borderWidth = 2.0
-				view.addSubview(codeView)
-				view.bringSubview(toFront: codeView)
-			}
-			
-			view.backgroundColor = .black
-			
-			cancelButton.addTarget(self, action: #selector(cancelAction(_:)), for: .touchUpInside)
-			
-			view.addSubview(cancelButton)
-			view.addSubview(touchView)
-			
-			if #available(iOS 11.0, *) {
-				cancelButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: Constants.Edges.cancel.top).isActive = true
-			} else {
-				cancelButton.topAnchor.constraint(equalTo: view.topAnchor, constant: Constants.Edges.cancel.top).isActive = true
-			}
-			
-			let cancelLeft = cancelButton.leftAnchor.constraint(equalTo: view.leftAnchor, constant: Constants.Edges.cancel.left)
-			let cancelWidth = cancelButton.widthAnchor.constraint(equalToConstant: Constants.Sizes.cancel)
-			let cancelHeight = cancelButton.heightAnchor.constraint(equalToConstant: Constants.Sizes.cancel)
-			
-			NSLayoutConstraint.activate([cancelLeft, cancelWidth, cancelHeight])
-			
-			if let device = AVCaptureDevice.default(for: AVMediaType.video), device.hasTorch {
-				torchButton.addTarget(self, action: #selector(toggleTorch(sender:)), for: .touchUpInside)
-				
-				view.addSubview(torchButton)
-				
-				let torchWidth = torchButton.widthAnchor.constraint(equalToConstant: Constants.Sizes.buttonSize / 2.0)
-				let torchHeight = torchButton.heightAnchor.constraint(equalToConstant: Constants.Sizes.buttonSize / 2.0)
-				let torchCenterX = torchButton.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: (view.bounds.width / -4.0) - (Constants.Sizes.buttonSize / 2.0) / 2.0)
-				
-				if #available(iOS 11, *) {
-					torchButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -Constants.Edges.button.bottom).isActive = true
-				} else {
-					torchButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -Constants.Edges.button.bottom).isActive = true
-				}
-				
-				NSLayoutConstraint.activate([torchWidth, torchHeight, torchCenterX])
-			}
-
+			setupViews()
 		} catch {
 			handleError(errorType: .custom(error.localizedDescription))
 			return
+		}
+	}
+	
+	fileprivate func setupViews() {
+		codeView = UIView()
+		if let codeView = codeView {
+			codeView.layer.borderColor = UIColor.green.cgColor
+			codeView.layer.borderWidth = 2.0
+			view.addSubview(codeView)
+			view.bringSubview(toFront: codeView)
+		}
+		
+		view.addSubview(touchView)
+		
+		if let device = AVCaptureDevice.default(for: AVMediaType.video), device.hasTorch {
+			torchButton.addTarget(self, action: #selector(toggleTorch(sender:)), for: .touchUpInside)
+			
+			view.addSubview(torchButton)
+			
+			let torchWidth = torchButton.widthAnchor.constraint(equalToConstant: Constants.Sizes.buttonSize / 2.0)
+			let torchHeight = torchButton.heightAnchor.constraint(equalToConstant: Constants.Sizes.buttonSize / 2.0)
+			let torchCenterX = torchButton.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: (view.bounds.width / -4.0) - (Constants.Sizes.buttonSize / 2.0) / 2.0)
+			
+			if #available(iOS 11, *) {
+				torchButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -Constants.Edges.button.bottom).isActive = true
+			} else {
+				torchButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -Constants.Edges.button.bottom).isActive = true
+			}
+			
+			NSLayoutConstraint.activate([torchWidth, torchHeight, torchCenterX])
 		}
 	}
 	
@@ -269,12 +250,12 @@ public enum ScannerType {
 		recentType = nil
 	}
 	
-	@objc fileprivate func cancelAction(_ sender: UIButton) {
-		delegate?.scanner?(self, willDismissScanner: true)
+	@objc fileprivate func cancelAction(_ sender: UIBarButtonItem) {
+		delegate?.willDismissScanner?(self)
 		
 		dismiss(animated: true) { [weak self] in
 			guard let weakSelf = self else { return }
-			weakSelf.delegate?.scanner?(weakSelf, didDismissScanner: true)
+			weakSelf.delegate?.didDismissScanner?(weakSelf)
 		}
 	}
 	
